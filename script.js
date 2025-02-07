@@ -17,7 +17,7 @@ function convertExcelToTxt() {
 
         workbook.SheetNames.forEach((sheetName) => {
             let sheet = workbook.Sheets[sheetName];
-            let rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
+            let rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false, raw: true });
 
             if (rows.length === 0) {
                 alert("Sheet kosong!");
@@ -33,7 +33,7 @@ function convertExcelToTxt() {
             // Masukkan data ke array kolom secara berurutan
             rows.forEach(row => {
                 for (let col = 0; col < maxCols; col++) {
-                    columnDataArray[col].push(row[col] || ""); // Gunakan "" jika kosong
+                    columnDataArray[col].push(row[col] !== undefined ? row[col] : ""); // Pastikan tidak undefined
                 }
             });
 
@@ -41,7 +41,8 @@ function convertExcelToTxt() {
             columnDataArray.forEach((columnData, colIndex) => {
                 let txtData = columnData.join("\n");
 
-                let blob = new Blob([txtData], { type: 'text/plain' });
+                // Fix encoding UTF-8 menggunakan BOM
+                let blob = new Blob(["\uFEFF" + txtData], { type: 'text/plain;charset=utf-8' });
                 let url = URL.createObjectURL(blob);
 
                 let columnName = String.fromCharCode(65 + colIndex); // A, B, C, ...
