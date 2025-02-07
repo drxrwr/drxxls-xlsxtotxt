@@ -13,21 +13,33 @@ function convertExcelToTxt() {
         let workbook = XLSX.read(data, { type: 'array' });
 
         let outputDiv = document.getElementById('output');
-        outputDiv.innerHTML = ""; // Kosongkan output sebelumnya
+        outputDiv.innerHTML = ""; // Bersihkan output sebelumnya
 
         workbook.SheetNames.forEach((sheetName) => {
             let sheet = workbook.Sheets[sheetName];
-            let txtData = XLSX.utils.sheet_to_csv(sheet, { FS: '\t' }); // Gunakan tab sebagai pemisah
+            let rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // Ambil data sebagai array
 
-            let blob = new Blob([txtData], { type: 'text/plain' });
-            let url = URL.createObjectURL(blob);
-            
-            let downloadLink = document.createElement("a");
-            downloadLink.href = url;
-            downloadLink.download = file.name.replace(/\.[^/.]+$/, "") + "_" + sheetName + ".txt";
-            downloadLink.innerText = "Download TXT - " + sheetName;
-            downloadLink.style.display = "block";
-            outputDiv.appendChild(downloadLink);
+            if (rows.length === 0) {
+                alert("Sheet kosong!");
+                return;
+            }
+
+            // Transpose data untuk mendapatkan kolom per kolom
+            let numColumns = rows[0].length;
+            for (let col = 0; col < numColumns; col++) {
+                let columnData = rows.map(row => row[col]).filter(cell => cell !== undefined).join("\n");
+
+                let blob = new Blob([columnData], { type: 'text/plain' });
+                let url = URL.createObjectURL(blob);
+                
+                let columnName = String.fromCharCode(65 + col); // A, B, C, ...
+                let downloadLink = document.createElement("a");
+                downloadLink.href = url;
+                downloadLink.download = file.name.replace(/\.[^/.]+$/, "") + `_${columnName}.txt`;
+                downloadLink.innerText = `Download TXT - ${columnName}`;
+                downloadLink.style.display = "block";
+                outputDiv.appendChild(downloadLink);
+            }
         });
     };
 
